@@ -70,13 +70,10 @@ function ApplyRadialFalloff(width, height, data, power) {
     }
 }
 
-function Sum_Blurred(width, height, data, perlin_weight) {
+function Sum_Blurred(width, height, data, perlin_weight, numsteps = 8, weight = [0.1, 0.4, 0.8, 2, 4, 4, 5, 5]) {
     console.log("Sum Blurred Images\n");
     // std::vector<float> result=data; (Copy)
     let result = new Float32Array(data);
-
-    const numsteps = 8;
-    const weight = [0.1, 0.4, 0.8, 2, 4, 4, 5, 5];
 
     // loopj(0,data.size()) result[j]=0;
     result.fill(0);
@@ -115,7 +112,7 @@ function Sum_Blurred(width, height, data, perlin_weight) {
     Normalize(data);
 }
 
-function Erosion(width, height, data, rng) {
+function Erosion(width, height, data, rng, iterations = 20000) {
     console.log("Erosion\n");
 
     const getpixel = (i, j) => {
@@ -138,13 +135,13 @@ function Erosion(width, height, data, rng) {
     let tmp_in = new Float32Array(data);
     
     // C++: loopi(0, 20000)
-    for (let i = 0; i < 20000; i++) {
+    for (let i = 0; i < iterations; i++) {
         let x = Math.abs(rng.get() % width) | 0;
         let y = Math.abs(rng.get() % height) | 0;
         v.push({ x: x, y: y, z: 1 });
     }
 
-    for (let i = 0; i < 20000; i++) {
+    for (let i = 0; i < iterations; i++) {
         for (let j = 0; j < 400; j++) {
             let w_path = (j < 5) ? (j + 1) / 5.0 : 1.0;
             
@@ -219,7 +216,8 @@ function Erosion(width, height, data, rng) {
     Normalize(data);
 }
 
-function Add_Perlin(width, height, data, perlin_weight, seed) {
+
+function Add_Perlin_detail(width, height, data, perlin_weight, seed, freqs = 7) {
     console.log("Add_Perlin");
     Normalize(data);
     
@@ -230,7 +228,34 @@ function Add_Perlin(width, height, data, perlin_weight, seed) {
     let tmp = new Float32Array(data);
     
     console.log("Generating Perlin Noise...");
-    get_perlin(data, width, height, seed);
+    get_perlin(data, width, height, seed, freqs);
+    
+    Normalize(data);
+    
+    for (let j = 0; j < height; j++) {
+        for (let i = 0; i < width; i++) {
+            let o = i + j * width;
+            let w = ((perlin_weight[o]) / 200.0 + 0.05);
+            if (w < 0) w = 0;
+            
+            data[o] = tmp[o] + (data[o] - 100) * Math.sqrt(w) * 0.2;
+        }
+    }
+    Normalize(data);
+}
+
+function Add_Perlin(width, height, data, perlin_weight, seed, freqs = 7) {
+    console.log("Add_Perlin");
+    Normalize(data);
+    
+    if (perlin_weight.length !== data.length) {
+    }
+    Normalize(perlin_weight);
+
+    let tmp = new Float32Array(data);
+    
+    console.log("Generating Perlin Noise...");
+    get_perlin(data, width, height, seed, freqs);
     
     Normalize(data);
     
@@ -246,4 +271,4 @@ function Add_Perlin(width, height, data, perlin_weight, seed) {
     Normalize(data);
 }
 
-export { Blur, Normalize, ApplyRadialFalloff, Sum_Blurred, Erosion, Add_Perlin };
+export { Blur, Normalize, ApplyRadialFalloff, Sum_Blurred, Erosion, Add_Perlin,Add_Perlin_detail};

@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { generateTerrainDataAsync } from './generation/main.js';
+import { terrainConfig } from './config.js';
 
 /**
  * Generates the terrain geometry directly from the procedural algorithm
@@ -7,11 +8,8 @@ import { generateTerrainDataAsync } from './generation/main.js';
  */
 export async function createRealisticTerrain(scene, onProgress) {
     // Configuration
-    // User requested 4096 * 4096 default size for exact consistency.
-    // Warning: This will be slow in browser and might effectively freeze the UI without off-screen worker properly set up.
-    // But user asked for exact consistency first.
-    const width = 1024; 
-    const height = 1024;
+    const width = terrainConfig.width; 
+    const height = terrainConfig.height;
     const seed = Math.floor(Math.random() * 200000);
     
     try {
@@ -158,7 +156,7 @@ export async function createRealisticTerrain(scene, onProgress) {
                 
                 // X, Y (Up), Z
                 vertices[index * 3] = x;
-                vertices[index * 3 + 1] = h * 400; // Apply scale directly
+                vertices[index * 3 + 1] = h * terrainConfig.peakHeight; // Apply scale directly
                 vertices[index * 3 + 2] = z; 
             }
         }

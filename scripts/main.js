@@ -56,7 +56,7 @@ const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true; // 启用阻尼（惯性）
 controls.dampingFactor = 0.05; // 阻尼系数
 controls.autoRotate = true;    
-controls.autoRotateSpeed = 0.5;
+controls.autoRotateSpeed = 0.2;
 
 controls.maxPolarAngle = Math.PI / 2 - 0.05; 
 // 调整缩放限制，适应更大的地形

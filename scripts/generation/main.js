@@ -1,6 +1,7 @@
 import { Rng } from './utils.js';
 import { DLA } from './dla.js';
-import { Normalize, Sum_Blurred, ApplyRadialFalloff, Add_Perlin, Erosion } from './terrainOps.js';
+import { Normalize, Sum_Blurred, ApplyRadialFalloff, Add_Perlin, Erosion ,Add_Perlin_detail} from './terrainOps.js';
+import { terrainConfig } from '../config.js';
 
 export async function generateTerrainDataAsync(width, height, seed = 134127, terrain_max_points = 300, falloff_power = 4.0, need_fall_off = 0, onProgress) {
     const report = (msg, pct) => {
@@ -37,7 +38,7 @@ export async function generateTerrainDataAsync(width, height, seed = 134127, ter
     report("Applying Stackblur & Summation...", 30);
     await yieldToUI();
     
-    Sum_Blurred(width, height, data, perlin_weight);
+    Sum_Blurred(width, height, data, perlin_weight, terrainConfig.blurredSteps, terrainConfig.blurredWeights);
     // Note: Normalize(data) is called INSIDE Sum_Blurred at the very end in javascript_version
     // So we don't need to call it again here if Sum_Blurred does it.
     // Checking javascript_version/terrainOps.js: Sum_Blurred ends with Normalize(data).
@@ -50,14 +51,14 @@ export async function generateTerrainDataAsync(width, height, seed = 134127, ter
     // Add Perlin
     report("Adding Perlin Noise...", 50);
     await yieldToUI();
-    Add_Perlin(width, height, data, perlin_weight, seed);
+    Add_Perlin(width, height, data, perlin_weight, seed, terrainConfig.perlinFreq);
     if (need_fall_off) ApplyRadialFalloff(width, height, data, falloff_power);
 
     // 3. Erosion
     report("Simulating Erosion (This may take a while)...", 70);
     await yieldToUI();
-    Erosion(width, height, data, rng);
-    Normalize(data);
+    Erosion(width, height, data, rng, terrainConfig.erosionCycles);
+    Add_Perlin_detail(width, height, data, perlin_weight, seed, terrainConfig.perlinFreq);
 
     // Normalize Final Logic
     report("Finalizing Data...", 90);

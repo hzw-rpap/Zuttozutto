@@ -1,4 +1,3 @@
-
 import { bicubicInterpolate } from './utils.js';
 
 let rnd_seed = 0;
@@ -56,7 +55,7 @@ function sample_bicubic(px, py, level, width, height) {
     return bicubicInterpolate(a, x01, y01);
 }
 
-export function get_perlin(data, width, height, seed = 0) {
+export function get_perlin(data, width, height, seed = 0, freqs = 7) {
     // rnd_seed = seed+seed*3456+seed*23521;
     rnd_seed = (seed + Math.imul(seed, 3456) + Math.imul(seed, 23521)) | 0;
 
@@ -67,7 +66,7 @@ export function get_perlin(data, width, height, seed = 0) {
         for (let i = 0; i < sx; i++) {
             let v = 0.0;
             // loopk(0,7) v=v*0.5+sample_bicubic(i,j,k, width, height);	
-            for (let k = 0; k < 7; k++) {
+            for (let k = 0; k < freqs; k++) {
                 let sample = sample_bicubic(i, j, k, width, height);
                 v = v * 0.5 + sample;
             }
