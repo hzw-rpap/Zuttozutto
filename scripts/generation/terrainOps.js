@@ -1,7 +1,7 @@
-import { stackblur } from './stackblur.js';
-import { get_perlin } from './perlin.js';
+import { stackblur, stackblurAsync } from './stackblur.js';
+import { get_perlin, get_perlin_async } from './perlin.js';
 
-function Blur(data, width, height, radius) {
+async function Blur(data, width, height, radius) {
     if (radius === 0) return;
     // radius=radius*width/800;
     radius = Math.floor(radius * width / 800);
@@ -9,10 +9,10 @@ function Blur(data, width, height, radius) {
     if (radius > 254) {
         let loops = Math.floor(radius / 128);
         for (let i = 0; i < loops; i++) {
-            stackblur(data, width, height, 254);
+            await stackblurAsync(data, width, height, 254);
         }
     } else {
-        stackblur(data, width, height, radius);
+        await stackblurAsync(data, width, height, radius);
     }
 }
 
@@ -21,7 +21,6 @@ function Normalize(data) {
     if (data.length === 0) return;
 
     let nanCount = 0;
-    // Strict C++ logic often initializes with first element or huge bounds
     let fmin = data[0];
     let fmax = data[0];
 
@@ -70,12 +69,10 @@ function ApplyRadialFalloff(width, height, data, power) {
     }
 }
 
-function Sum_Blurred(width, height, data, perlin_weight, numsteps = 8, weight = [0.1, 0.4, 0.8, 2, 4, 4, 5, 5]) {
+async function Sum_Blurred(width, height, data, perlin_weight, numsteps = 8, weight = [0.1, 0.4, 0.8, 2, 4, 4, 5, 5]) {
     console.log("Sum Blurred Images\n");
-    // std::vector<float> result=data; (Copy)
     let result = new Float32Array(data);
 
-    // loopj(0,data.size()) result[j]=0;
     result.fill(0);
 
     for (let i = 0; i < numsteps; i++) {
@@ -84,14 +81,12 @@ function Sum_Blurred(width, height, data, perlin_weight, numsteps = 8, weight = 
 
         let tmp = new Float32Array(data);
         
-        // Match C++ integer arithmetic for radius calc
-        Blur(tmp, width, height, Math.floor(radius * 2 / 3) + 1);
-        Blur(tmp, width, height, Math.floor(radius * 2 / 3));
+        await Blur(tmp, width, height, Math.floor(radius * 2 / 3) + 1);
+        await Blur(tmp, width, height, Math.floor(radius * 2 / 3));
         
         Normalize(tmp);
 
         // Optimization: perlin_weight is passed as reference.
-        // We need to copy tmp to perlin_weight if i==6
         if (i === 6) {
              perlin_weight.set(tmp);
         }
@@ -112,7 +107,7 @@ function Sum_Blurred(width, height, data, perlin_weight, numsteps = 8, weight = 
     Normalize(data);
 }
 
-function Erosion(width, height, data, rng, iterations = 20000) {
+async function Erosion(width, height, data, rng, iterations = 20000) {
     console.log("Erosion\n");
 
     const getpixel = (i, j) => {
@@ -145,11 +140,6 @@ function Erosion(width, height, data, rng, iterations = 20000) {
         for (let j = 0; j < 400; j++) {
             let w_path = (j < 5) ? (j + 1) / 5.0 : 1.0;
             
-            // In C++ v[i].x are floats so no floor until access? 
-            // C++: vec3f v. init with integers.
-            // C++ Main Loop: 
-            // int ix=v[i].x; int iy=v[i].y;
-            // float az=getpixel(ix,iy);
             
             let ix = Math.floor(v[i].x);
             let iy = Math.floor(v[i].y);
@@ -201,7 +191,7 @@ function Erosion(width, height, data, rng, iterations = 20000) {
 
     for (let j = 0; j < 7; j++) {
         let tmp = new Float32Array(tmp_in);
-        Blur(tmp, width, height, Math.floor(r_arr[j] / 2));
+        await Blur(tmp, width, height, Math.floor(r_arr[j] / 2));
         
         for (let i = 0; i < data.length; i++) {
             data[i] += tmp[i] * w_arr[j];
@@ -217,7 +207,7 @@ function Erosion(width, height, data, rng, iterations = 20000) {
 }
 
 
-function Add_Perlin_detail(width, height, data, perlin_weight, seed, freqs = 7) {
+async function Add_Perlin_detail(width, height, data, perlin_weight, seed, freqs = 7) {
     console.log("Add_Perlin");
     Normalize(data);
     
@@ -228,7 +218,7 @@ function Add_Perlin_detail(width, height, data, perlin_weight, seed, freqs = 7) 
     let tmp = new Float32Array(data);
     
     console.log("Generating Perlin Noise...");
-    get_perlin(data, width, height, seed, freqs);
+    await get_perlin_async(data, width, height, seed, freqs);
     
     Normalize(data);
     
@@ -244,7 +234,7 @@ function Add_Perlin_detail(width, height, data, perlin_weight, seed, freqs = 7) 
     Normalize(data);
 }
 
-function Add_Perlin(width, height, data, perlin_weight, seed, freqs = 7) {
+async function Add_Perlin(width, height, data, perlin_weight, seed, freqs = 7) {
     console.log("Add_Perlin");
     Normalize(data);
     
@@ -255,7 +245,7 @@ function Add_Perlin(width, height, data, perlin_weight, seed, freqs = 7) {
     let tmp = new Float32Array(data);
     
     console.log("Generating Perlin Noise...");
-    get_perlin(data, width, height, seed, freqs);
+    await get_perlin_async(data, width, height, seed, freqs);
     
     Normalize(data);
     

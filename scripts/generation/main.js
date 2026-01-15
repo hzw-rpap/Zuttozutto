@@ -17,8 +17,6 @@ export async function generateTerrainDataAsync(width, height, seed = 134127, ter
     let t1 = performance.now();
 
     // Allocate buffers
-    // In C++ logic, main buffers are data and perlin_weight.
-    // Ensure size is exactly width * height.
     let data = new Float32Array(width * height);
     let perlin_weight = new Float32Array(width * height); 
     
@@ -38,26 +36,18 @@ export async function generateTerrainDataAsync(width, height, seed = 134127, ter
     report("Applying Stackblur & Summation...", 30);
     await yieldToUI();
     
-    Sum_Blurred(width, height, data, perlin_weight, terrainConfig.blurredSteps, terrainConfig.blurredWeights);
-    // Note: Normalize(data) is called INSIDE Sum_Blurred at the very end in javascript_version
-    // So we don't need to call it again here if Sum_Blurred does it.
-    // Checking javascript_version/terrainOps.js: Sum_Blurred ends with Normalize(data).
-    // Checking scripts/generation/terrainOps.js: Sum_Blurred ends with Normalize(data).
-    // So this Normalize call here is redundant but harmless.
-    // However, javascript_version/main.js DOES call Normalize(data) after Sum_Blurred returns.
-    // So we should KEEP it to be exactly consistent.
-    Normalize(data);
+    await Sum_Blurred(width, height, data, perlin_weight, terrainConfig.blurredSteps, terrainConfig.blurredWeights);
 
     // Add Perlin
     report("Adding Perlin Noise...", 50);
     await yieldToUI();
-    Add_Perlin(width, height, data, perlin_weight, seed, terrainConfig.perlinFreq);
+    await Add_Perlin(width, height, data, perlin_weight, seed, terrainConfig.perlinFreq);
     if (need_fall_off) ApplyRadialFalloff(width, height, data, falloff_power);
 
     // 3. Erosion
     report("Simulating Erosion (This may take a while)...", 70);
     await yieldToUI();
-    Erosion(width, height, data, rng, terrainConfig.erosionCycles);
+    await Erosion(width, height, data, rng, terrainConfig.erosionCycles);
     Add_Perlin_detail(width, height, data, perlin_weight, seed, terrainConfig.perlinFreq);
 
     // Normalize Final Logic

@@ -74,3 +74,87 @@ export function get_perlin(data, width, height, seed = 0, freqs = 7) {
         }
     }
 }
+
+let perlinWorkerPool = [];
+
+export async function get_perlin_async(data, width, height, seed = 0, freqs = 7) {
+    // Check for SharedArrayBuffer support
+    if (typeof SharedArrayBuffer === 'undefined') {
+        console.warn("SharedArrayBuffer not available, falling back to synchronous perlin.");
+        get_perlin(data, width, height, seed, freqs);
+        return;
+    }
+
+    let localData = data;
+    let needsCopyBack = false;
+
+    // Check if the buffer is already a SharedArrayBuffer
+    if (!(data.buffer instanceof SharedArrayBuffer)) {
+        // Create a SharedArrayBuffer and copy data
+        const sab = new SharedArrayBuffer(data.length * 4);
+        localData = new Float32Array(sab);
+        localData.set(data);
+        needsCopyBack = true;
+    }
+
+    const cores = navigator.hardwareConcurrency || 4;
+    
+    // Initialize worker pool if needed
+    if (perlinWorkerPool.length === 0) {
+        for (let i = 0; i < cores; i++) {
+            const worker = new Worker('scripts/generation/perlinWorker.js', { type: 'module' });
+            perlinWorkerPool.push(worker);
+        }
+    } else { 
+        // Ensure pool size matches cores just in case context changes, though rare
+        while(perlinWorkerPool.length < cores) {
+             const worker = new Worker('scripts/generation/perlinWorker.js', { type: 'module' });
+             perlinWorkerPool.push(worker);
+        }
+    }
+    
+    const rowsPerCore = Math.ceil(height / cores);
+
+    const promises = perlinWorkerPool.slice(0, cores).map((worker, index) => {
+        const startY = index * rowsPerCore;
+        const endY = Math.min(startY + rowsPerCore, height);
+        
+        if (startY >= height) return Promise.resolve(); // No work for this worker
+
+        return new Promise((resolve, reject) => {
+             const onMessage = (e) => {
+                worker.removeEventListener('message', onMessage);
+                worker.removeEventListener('error', onError);
+                resolve();
+            };
+            const onError = (err) => {
+                worker.removeEventListener('message', onMessage);
+                worker.removeEventListener('error', onError);
+                reject(err);
+            };
+
+            worker.addEventListener('message', onMessage);
+            worker.addEventListener('error', onError);
+
+            worker.postMessage({
+                data: localData,
+                width,
+                height,
+                seed,
+                freqs,
+                startY,
+                endY
+            });
+        });
+    });
+
+    try {
+        await Promise.all(promises);
+    } catch (err) {
+        console.error("Perlin Worker error:", err);
+    }
+
+    if (needsCopyBack) {
+        data.set(localData);
+    }
+}

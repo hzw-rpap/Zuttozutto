@@ -2,10 +2,7 @@ import * as THREE from 'three';
 import { generateTerrainDataAsync } from './generation/main.js';
 import { terrainConfig } from './config.js';
 
-/**
- * Generates the terrain geometry directly from the procedural algorithm
- * and adds it to the scene.
- */
+
 export async function createRealisticTerrain(scene, onProgress) {
     // Configuration
     const width = terrainConfig.width; 
@@ -33,10 +30,6 @@ export async function createRealisticTerrain(scene, onProgress) {
         const uvs = new Float32Array(verticesCount * 2);
         
         // Generate vertices and UVs
-        // Map grid (0..width-1, 0..height-1) to world coords (-1000..1000, -1000..1000)
-        // PlaneGeometry(2000, 2000) is centered. X: -1000 to 1000, Y: 1000 to -1000 (usually Y is up in 2D, but Z in 3D)
-        // PlaneGeometry is created on XY plane by default. We rotate it later.
-        // Let's stick to X, Y plane logic then rotate X by -90 deg (which swaps Y to Z, and flips sign?)
         // PlaneGeometry: X goes right, Y goes up.
         // Our grid: x=0..width, y=0..height.
         const halfSize = 1000;
@@ -44,12 +37,7 @@ export async function createRealisticTerrain(scene, onProgress) {
         const segmentH = 2000 / (height - 1);
         
         for (let i = 0; i < height; i++) {
-            const y = i * segmentH - halfSize; // -1000 to 1000? PlaneGeometry usually Y goes + to -? 
-            // Three.js PlaneGeometry starts top-left usually? 
-            // Actually PlaneGeometry builds usually: x: -half to +half, y: +half to -half.
-            // Let's implement generic grid.
-            // y coordinate: (height - 1 - i) * ... if we want top-down. 
-            // Let's match standard PlaneGeometry:
+            const y = i * segmentH - halfSize; //
             // X is -width/2 to width/2
             // Y is height/2 to -height/2  <-- IMPORTANT
             
@@ -79,27 +67,9 @@ export async function createRealisticTerrain(scene, onProgress) {
                 const b = i * width + j + 1;
                 const c = (i + 1) * width + j;
                 const d = (i + 1) * width + j + 1;
-                
-                // Faces: a-b-d, a-d-c? Standard PlaneGeometry: a, c, b and b, c, d
-                // Triangle 1: a, c, b (CounterClockWise?)
-                // Three.js CCW is standard front face.
-                // vertices: a(top-left), b(top-right), c(bot-left), d(bot-right)
-                // Y goes down.
-                // 1st tri: a(tl), c(bl), b(tr) -> CCW?
-                // Vector AC is down, Vector AB is right. Cross(Down, Right) = Out (Z+). Correct.
-                
                 indices[ptr++] = a;
                 indices[ptr++] = c;
                 indices[ptr++] = b;
-                
-                // 2nd tri: b(tr), c(bl), d(br)
-                // Vector BC (tr to bl), Vector BD (tr to br).
-                // Or b, c, d. b(tr), c(bl), d(br).
-                // Vector CB is up-right. Vector CD is right. Cross(UpRight, Right) = In (Z-). Wrong.
-                // We want b, d, c? No.
-                // Let's check typical quad split: a, c, d is bottom-left tri?
-                // Standard: a, c, b and b, c, d. (This covers the quad).
-                
                 indices[ptr++] = b;
                 indices[ptr++] = c;
                 indices[ptr++] = d;
@@ -111,37 +81,7 @@ export async function createRealisticTerrain(scene, onProgress) {
         geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
 
         // Now Apply Height
-        geometry.rotateX(-Math.PI / 2); // Rotate to XZ plane if desired. 
-        // Note: After rotation, Y becomes Up. 
-        // Initial vertices[... + 1] was Y. vertices[... + 2] was Z=0.
-        // After rotX(-90): 
-        // y' = y*cos - z*sin = 0 - 0 = 0?
-        // z' = y*sin + z*cos = -y.
-        // So Y becomes Z (inverted).
-        // Geometry becomes flat on XZ plane. Z varies. Y is 0.
-        // But we want to set Height. Height usually is Y in 3D or Z in typical terrain maps?
-        // Standard Three.js: Y is up.
-        // PlaneGeometry created on XY, rotated -90 around X => lies on XZ. Height is Y.
-        
-        // HOWEVER, we have manual control. Why rotate?
-        // We can just build it on XZ plane directly!
-        // X = j * segW - half.
-        // Z = i * segH - half.
-        // Y = heightData.
-        // THIS IS SIMPLER.
-        
-        // Re-do vertices generation logic inside the loop above?
-        // Let's just update the vertices directly here, assuming above loop created generic Plane structure in XY.
-        // If we want consistency with PlaneGeometry:
-        // PlaneGeometry + rotateX(-Math.PI/2) results in:
-        // x -> x
-        // y -> z
-        // z -> -y (height)
-        // So we should map heightData to positions.
-        
-        // But creating BufferAttribute again is wasteful.
-        // Let's overwrite correct positions now.
-        
+        geometry.rotateX(-Math.PI / 2); // Rotate to XZ plane if desired.       
         const posAttribute = geometry.attributes.position;
         // const posArray = posAttribute.array; // This is 'vertices' ref
         

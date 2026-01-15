@@ -64,9 +64,7 @@ export function stackblurJob(src, w, h, radius, cores, core, step, stack) {
             for (i = 0; i <= radius; i++) {
                 // src_ptr[(wm-radius+i+1)%w]
                 let idx_offset = (wm - radius + i + 1) % w;
-                // Since this can be negative in C++ if modulus operator behavior differs but here w is positive. 
-                // C++: (a%n) can be negative if a is negative. But here (wm - radius + i + 1) should be positive?
-                // wm = w-1. radius <= 254. w = 4096. positive.
+
                 
                 let v = src[src_idx + idx_offset];
                 
@@ -91,7 +89,7 @@ export function stackblurJob(src, w, h, radius, cores, core, step, stack) {
             if (xp > wm) xp = wm;
 
             src_idx = xp + y * w; // src ptr
-            dst_idx = y * w; // dst ptr (reuses same buffer in logic? In C++ function it takes float* src, writes back to it?)
+            dst_idx = y * w; // dst ptr
 
             for (x = 0; x < w + radius; x++) {
                 if (x === w) dst_idx -= w;
@@ -154,7 +152,6 @@ export function stackblurJob(src, w, h, radius, cores, core, step, stack) {
             
             for (i = 0; i <= radius; i++) {
                 // ((hm-radius+i+1)%h)*w + src_idx_offset_x (which is 0 relative to src_ptr start)
-                // In C++: src_ptr[ ((hm-radius+i+1)%h)*w ] where src_ptr starts at x.
                 let y_idx = (hm - radius + i + 1) % h;
                 let v = src[src_idx + y_idx * w];
                 
@@ -234,4 +231,86 @@ export function stackblur(src, w, h, radius) {
 
     stackblurJob(src, w, h, radius, 1, 0, 1, stack);
     stackblurJob(src, w, h, radius, 1, 0, 2, stack);
+}
+
+let workerPool = [];
+
+export async function stackblurAsync(src, w, h, radius) {
+    if (radius > 254) return;
+    if (radius < 1) return;
+
+    // Check for SharedArrayBuffer support
+    if (typeof SharedArrayBuffer === 'undefined') {
+        console.warn("SharedArrayBuffer not available, falling back to synchronous stackblur.");
+        stackblur(src, w, h, radius);
+        return;
+    }
+
+    let localSrc = src;
+    let needsCopyBack = false;
+
+    // Check if the buffer is already a SharedArrayBuffer
+    if (!(src.buffer instanceof SharedArrayBuffer)) {
+        // Create a SharedArrayBuffer and copy data
+        const sab = new SharedArrayBuffer(src.length * 4);
+        localSrc = new Float32Array(sab);
+        localSrc.set(src);
+        needsCopyBack = true;
+    }
+
+    const cores = navigator.hardwareConcurrency || 4;
+    
+    // Initialize worker pool if needed
+    if (workerPool.length === 0) {
+        for (let i = 0; i < cores; i++) {
+            const worker = new Worker('scripts/generation/stackblurWorker.js', { type: 'module' });
+            workerPool.push(worker);
+        }
+    }
+
+    const runStep = (step) => {
+        return Promise.all(workerPool.map((worker, index) => {
+            return new Promise((resolve, reject) => {
+                const onMessage = (e) => {
+                    worker.removeEventListener('message', onMessage);
+                    worker.removeEventListener('error', onError);
+                    resolve();
+                };
+                const onError = (err) => {
+                    worker.removeEventListener('message', onMessage);
+                    worker.removeEventListener('error', onError);
+                    reject(err);
+                };
+
+                worker.addEventListener('message', onMessage);
+                worker.addEventListener('error', onError);
+                
+                worker.postMessage({
+                    src: localSrc,
+                    w,
+                    h,
+                    radius,
+                    cores: workerPool.length,
+                    core: index,
+                    step
+                });
+            });
+        }));
+    };
+
+    try {
+        // Step 1: Horizontal Blur
+        await runStep(1);
+        
+        // Step 2: Vertical Blur
+        await runStep(2);
+    } catch (err) {
+        console.error("Worker error:", err);
+    } 
+    // Do not terminate workers, keep them for next run
+
+    // If we used a temporary SharedArrayBuffer, copy the result back
+    if (needsCopyBack) {
+        src.set(localSrc);
+    }
 }

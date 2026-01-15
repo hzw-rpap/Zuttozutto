@@ -5,14 +5,14 @@ import { createRealisticTerrain } from './terrainGenerator.js';
 
 
 // const 只保证变量存的地址不变，但是内容还是可以修改的
-// --- 1. 场景 ---
+//1. 场景 
 const scene = new THREE.Scene();
-const fogColor = 0xcccccc; // 改成淡蓝色的雾气背景，模拟雪山的阴天
+const fogColor = 0xcccccc; 
 scene.background = new THREE.Color(fogColor);
-scene.fog = new THREE.FogExp2(fogColor, 0.0005);// FogExp2 是指数雾，比线性雾更真实，参数 0.02 是雾的浓度
+scene.fog = new THREE.FogExp2(fogColor, 0.0005);// FogExp2 是指数雾，比线性雾更真实，参数 0.0005 是雾的浓度
 
 
-// --- 1.5 灯光 (新增) ---
+//1.5 灯光 (新增) 
 // 环境光：均匀照亮所有物体，模拟天空的散射光
 const ambientLight = new THREE.AmbientLight(0xffffff, 1); 
 scene.add(ambientLight);
@@ -38,34 +38,31 @@ scene.add(water);
 
 
 
-// --- 2. 相机 ---
+//2. 相机
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
-// 调整相机位置，以便能看到整个海岛
 camera.position.set(0, 80, 150); 
 camera.lookAt(0, 80, 0);
 
-// --- 3. 渲染器 ---
+//3. 渲染器
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
-// 开启阴影支持（可选，为了更好看）
 renderer.shadowMap.enabled = true; 
 document.body.appendChild(renderer.domElement);
 
-// --- 4. 添加控制器 (OrbitControls) ---
+//4. 添加控制器
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true; // 启用阻尼（惯性）
+controls.enableDamping = true; // 阻尼
 controls.dampingFactor = 0.05; // 阻尼系数
 controls.autoRotate = true;    
 controls.autoRotateSpeed = 0.2;
 
 controls.maxPolarAngle = Math.PI / 2 - 0.05; 
-// 调整缩放限制，适应更大的地形
 controls.minDistance = 20;
 controls.maxDistance = 400;
 
 
 
-// --- 5. 生成地形 ---
+//5. 生成地形
 const loadingScreen = document.getElementById('loading-screen');
 const progressBar = document.getElementById('progress-bar');
 const statusText = document.getElementById('status-text');
@@ -97,7 +94,7 @@ createRealisticTerrain(scene, updateProgress).then(() => {
 // terrainMesh.position.y = -30;
 
 
-// --- 6. 动画循环 ---
+//6. 动画循环 
 function animate() {
     //告诉浏览提，animate这个函数需要按照一定频率循环调用
     requestAnimationFrame(animate);
@@ -108,7 +105,7 @@ function animate() {
 }
 animate();
 
-// --- 7. 自适应窗口 ---
+//7. 自适应窗口
 window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
