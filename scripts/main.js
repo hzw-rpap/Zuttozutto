@@ -23,7 +23,7 @@ dirLight.position.set(50, 100, 50); // 太阳位置拉高，照亮整个岛
 scene.add(dirLight);
 
 // --- 添加圆形海平面 (Water Helper) ---
-const waterGeometry = new THREE.CircleGeometry(10000, 64); // 半径1000，分段64
+const waterGeometry = new THREE.CircleGeometry(2000, 64); // 半径1000，分段64
 const waterMaterial = new THREE.MeshStandardMaterial({ 
     color: 0x3366ff, 
     transparent: false, 
