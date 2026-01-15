@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+
+    <!--The name of your web pages-->
+    <title>我的3D雪山原型</title>
+    <link href="styles/mountian.css" rel="stylesheet" />
+
+    <!--导入映射，在导入的时候将规定的符号映射成具体地址-->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+</head>
+
+
+<body>
+
+    <div id="ui-layer">
+        <h1>Welcome to My Blog</h1>
+        <p>按住鼠标左键拖拽 | 滚轮缩放</p>
+    </div>
+
+    <div id="loading-screen">
+        <div class="loading-content">
+            <h2>Generating Terrain...</h2>
+            <div id="progress-container">
+                <div id="progress-bar"></div>
+            </div>
+            <p id="status-text">Initializing...</p>
+            <p id="error-text" style="color: #ff6b6b; display: none;"></p>
+        </div>
+    </div>
+
+    <!--嵌入式脚本，通常写在最后，保证以上的html元素都已经加噪完成
+    保证脚本可以找到-->
+
+    <!-- type="module" 告诉浏览器这个嵌入式javascript是现代ES module标准的脚本-->
+    <!-- 只有加入了type=“module"，浏览器才能识别import语句-->
+    <script type="module" src="scripts/main.js"></script>
+</body>
+</html>
+
