@@ -41,8 +41,8 @@ scene.add(water);
 // --- 2. 相机 ---
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
 // 调整相机位置，以便能看到整个海岛
-camera.position.set(0, 100, 200); 
-camera.lookAt(0, 100, 0);
+camera.position.set(0, 80, 150); 
+camera.lookAt(0, 80, 0);
 
 // --- 3. 渲染器 ---
 const renderer = new THREE.WebGLRenderer({ antialias: true });
