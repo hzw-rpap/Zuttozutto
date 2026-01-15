@@ -33,7 +33,7 @@ export async function createRealisticTerrain(scene, onProgress) {
                     vertexColors: true, // Enable vertex coloring
                     roughness: 0.8,
                     metalness: 0.2,
-                    flatShading: true, // Changed from false to true to restore low-poly look
+                    flatShading: true, 
                     side: THREE.DoubleSide
                 });
 

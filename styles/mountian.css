@@ -12,8 +12,8 @@ canvas { display: block; }
 
 #loading-screen {
     position: fixed;
-    bottom: 20px;
-    right: 20px;
+    bottom: 5px;
+    right: 5px;
     width: auto;
     height: auto;
     background-color: transparent;
@@ -22,13 +22,15 @@ canvas { display: block; }
     color: white;
     font-family: sans-serif;
     pointer-events: none; /* Prevent blocking clicks elsewhere */
+    transform: scale(0.5); /* Make it half size */
+    transform-origin: bottom right;
 }
 
 .loading-content {
-    background-color: rgba(0, 0, 0, 0.5);
-    padding: 15px;
-    border-radius: 10px;
-    text-align: center;
+    background-color: transparent; /* Remove gray background */
+    padding: 0;
+    border-radius: 0;
+    text-align: right; /* Align text to right */
     width: 250px;
 }
 
