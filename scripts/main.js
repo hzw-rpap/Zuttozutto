@@ -73,23 +73,48 @@ function updateProgress(message, percentage) {
     if (progressBar) progressBar.style.width = percentage + '%';
 }
 
-createRealisticTerrain(scene, updateProgress).then(() => {
+createRealisticTerrain(scene, updateProgress).then((terrainMesh) => {
     // Hide loading screen on success
-    if (loadingScreen) {
-        // Add a small delay/fade out effect if desired
-        setTimeout(() => {
-            loadingScreen.style.display = 'none';
-        }, 500);
+    if (statusText) {
+        statusText.innerText = "Generation Complete";
+        statusText.style.color = '#4CAF50';
     }
+    if (progressBar) {
+        // Optional: Hide the bar or keep it full
+        progressBar.style.width = '100%';
+        progressBar.parentElement.style.display = 'none'; // Hide the progress bar container
+    }
+    // We do NOT hide the loadingScreen container itself, so the text "Generation Complete" remains visible in bottom right.
+    // However, if we want to auto-hide it after a while, we can.
+    // User requested: "加载完成就在右下角显示complete並顯示地形就行" -> "Display Complete in bottom right and show terrain".
+    
+    // Ensure terrain is visible (it is added to scene inside createRealisticTerrain now)
+    // Adjust y position if needed, previous code had terrainMesh.position.y = -30 commented out.
+    // The generator produces terrain centered at y=0 roughly but peaks go up.
+    
+    // Let's fade out the "Complete" message after a longer delay if desired, or keep it.
+    // User instruction implies leaving it there or just showing "Complete". 
+    // I will leave it visible as requested.
+    
 }).catch(err => {
     // Show error on loading screen
     if (statusText) statusText.innerText = "Error Occurred!";
     if (progressBar) progressBar.style.backgroundColor = 'red';
     if (errorText) {
         errorText.style.display = 'block';
-        errorText.innerText = err.toString() + "\n\n" + (err.stack || "");
+        
+        let msg = "Unknown Error";
+        if (err && err.message) {
+            msg = err.message;
+        } else if (err && err instanceof Event) {
+            msg = "Failed to load Worker script (404 Not Found or Parse Error). check console for details.";
+        } else if (typeof err === 'string') {
+            msg = err;
+        }
+
+        errorText.innerText = msg + "\n\nCheck console (F12) for more details.";
     }
-    console.error(err);
+    console.error("Critical Error in Terrain Generation:", err);
 });
 // terrainMesh.position.y = -30;
 

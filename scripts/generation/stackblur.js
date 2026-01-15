@@ -263,7 +263,7 @@ export async function stackblurAsync(src, w, h, radius) {
     // Initialize worker pool if needed
     if (workerPool.length === 0) {
         for (let i = 0; i < cores; i++) {
-            const worker = new Worker('scripts/generation/stackblurWorker.js', { type: 'module' });
+            const worker = new Worker(new URL('./stackblurWorker.js', import.meta.url), { type: 'module' });
             workerPool.push(worker);
         }
     }

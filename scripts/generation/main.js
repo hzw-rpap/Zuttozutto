@@ -6,10 +6,15 @@ import { terrainConfig } from '../config.js';
 export async function generateTerrainDataAsync(width, height, seed = 134127, terrain_max_points = 300, falloff_power = 4.0, need_fall_off = 0, onProgress) {
     const report = (msg, pct) => {
         if(onProgress) onProgress(msg, pct);
-        console.log(`[Progress ${pct.toFixed(0)}%] ${msg}`);
+        // console.log(`[Progress ${pct.toFixed(0)}%] ${msg}`);
     };
 
-    const yieldToUI = () => new Promise(resolve => setTimeout(resolve, 10));
+    const yieldToUI = () => {
+        // In worker, we don't strictly need to yield, but if we want to process messages (like termination) maybe?
+        // Actually Promise with setTimeout allows the event loop to turn.
+        // If we are in the main thread, we definitely need this.
+        return new Promise(resolve => setTimeout(resolve, 0));
+    };
 
     report(`Generating terrain ${width}x${height} with seed ${seed}...`, 0);
     await yieldToUI();

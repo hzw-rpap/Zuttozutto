@@ -102,13 +102,13 @@ export async function get_perlin_async(data, width, height, seed = 0, freqs = 7)
     // Initialize worker pool if needed
     if (perlinWorkerPool.length === 0) {
         for (let i = 0; i < cores; i++) {
-            const worker = new Worker('scripts/generation/perlinWorker.js', { type: 'module' });
+            const worker = new Worker(new URL('./perlinWorker.js', import.meta.url), { type: 'module' });
             perlinWorkerPool.push(worker);
         }
     } else { 
         // Ensure pool size matches cores just in case context changes, though rare
         while(perlinWorkerPool.length < cores) {
-             const worker = new Worker('scripts/generation/perlinWorker.js', { type: 'module' });
+             const worker = new Worker(new URL('./perlinWorker.js', import.meta.url), { type: 'module' });
              perlinWorkerPool.push(worker);
         }
     }
