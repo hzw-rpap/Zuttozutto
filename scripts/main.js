@@ -75,6 +75,13 @@ function updateProgress(message, percentage) {
 
 createRealisticTerrain(scene, updateProgress).then((terrainMesh) => {
     // Hide loading screen on success
+    
+    // 隐藏标题 "Generating Terrain..."
+    const loadingTitle = document.querySelector('#loading-screen h2');
+    if (loadingTitle) {
+        loadingTitle.style.display = 'none';
+    }
+
     if (statusText) {
         statusText.innerText = "Generation Complete";
         statusText.style.color = '#4CAF50';
