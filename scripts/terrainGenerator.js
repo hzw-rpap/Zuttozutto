@@ -10,8 +10,8 @@ export async function createRealisticTerrain(scene, onProgress) {
     // User requested 4096 * 4096 default size for exact consistency.
     // Warning: This will be slow in browser and might effectively freeze the UI without off-screen worker properly set up.
     // But user asked for exact consistency first.
-    const width = 4096; 
-    const height = 4096;
+    const width = 1024; 
+    const height = 1024;
     const seed = Math.floor(Math.random() * 200000);
     
     try {
