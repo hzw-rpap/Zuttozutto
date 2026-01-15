@@ -31,5 +31,5 @@ export const terrainConfig = {
     // 6. 柏林噪聲頻率
     // 控制 Perlin 噪声的叠加层数（Octaves）。
     // 值越高，地形表面的微小杂色和细节越多。推荐 6-8。
-    perlinFreq: 15
+    perlinFreq: 7
 };
