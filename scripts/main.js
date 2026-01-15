@@ -32,7 +32,7 @@ const waterMaterial = new THREE.MeshStandardMaterial({
 });
 const water = new THREE.Mesh(waterGeometry, waterMaterial);
 water.rotation.x = -Math.PI / 2;
-water.position.y = -220 ; // 海平面高度
+water.position.y = -224 ; // 海平面高度
 scene.add(water);
 
 
