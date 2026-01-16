@@ -43,8 +43,16 @@ export function addMarkers(scene, terrainMesh) {
 
     const selectedPoints = [];
     const minDistance = terrainConfig.min_distance || 100;
-    const labels = ["个人简介", "个人博客", "课堂笔记", "科研笔记"];
-    const needed = 4;
+    
+    // 定义标签和对应的链接
+    const markerData = [
+        { label: "个人简介", url: "profile.html" },
+        { label: "个人博客", url: "blog.html" },
+        { label: "课堂笔记", url: "notes.html" },
+        { label: "科研笔记", url: "research.html" }
+    ];
+    
+    const needed = markerData.length;
 
     // 2. Greedy Selection
     // Iterate through high points and select if far enough from existing selections.
@@ -86,12 +94,16 @@ export function addMarkers(scene, terrainMesh) {
 
     // 4. Create floating text boxes
     const textureLoader = new THREE.TextureLoader();
+    const createdSprites = [];
     
     selectedPoints.forEach((point, index) => {
-        if (index >= labels.length) return;
+        if (index >= markerData.length) return;
 
-        const labelText = labels[index];
-        const sprite = createTextSprite(labelText);
+        const data = markerData[index];
+        const sprite = createTextSprite(data.label);
+
+        // Store URL in userData
+        sprite.userData = { url: data.url };
         
         // Position: 50 units above the point
         // Note: The point coordinates are LOCAL to the mesh geometry.
@@ -106,7 +118,11 @@ export function addMarkers(scene, terrainMesh) {
         
         sprite.position.set(point.x, point.y + 50, point.z);
         terrainMesh.add(sprite); // Make it a child of the terrain
+
+        createdSprites.push(sprite);
     });
+
+    return createdSprites;
 }
 
 function createTextSprite(message) {
